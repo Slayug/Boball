@@ -57,12 +57,16 @@ ctx.canvas.height = heightW - 4;
 var WIDTH = widthW;
 var HEIGHT = heightW - 4;
 var hasClicked = false;
-var Point = function(x, y, speedX, speedY){
+var Point = function(x, y, color, speedX, speedY){
 	this.x = x;
 	this.y = y;
 	this.dx = parseInt(Math.random()*1000)/1000;
 	this.dy = parseInt(Math.random()*1000)/1000;
-	this.color = randomColor();
+	if(color == undefined){
+		this.color = randomColor();
+	}else{
+		this.color = color;
+	}
 	if(speedX == undefined){
 		this.speedX = random(2, 12);
 	}else{
@@ -82,7 +86,6 @@ var Point = function(x, y, speedX, speedY){
 		this.speedY = speedY;
 	}
 	this.radius = 4;
-	this.time = 2;
 	this.inCollision = function(oPoint){
 		var distance = Math.sqrt((this.x - oPoint.x) *
 				(this.x - oPoint.x) +
@@ -114,12 +117,13 @@ var currentLevel = -1;
 var levels = [];
 
 
-function Level(goal, fctGeneration, logic, fctMouseClicked){
+function Level(goal, fctGeneration, logic, draw, fctMouseClicked){
 	this.goal = goal;
 	this.bowlsPlaced = 0;
 	//methods
 	this.generation = fctGeneration;
 	this.logic = logic;
+	this.draw = draw;
 	this.eventMouseClicked = fctMouseClicked;
 }
 levels.push(new Level('Touchez 1 boule !',
@@ -140,6 +144,7 @@ levels.push(new Level('Touchez 1 boule !',
 			nextLevel();
 		}
 	},
+	function(){},
 	function(e){ //MOUSECLIKED
 		for(var p = 0; p < points.length; p++){
 			points[p].speedX *= -1;
@@ -170,6 +175,7 @@ levels.push(new Level('Touchez 3 boules !',
 			nextLevel();
 		}
 	},
+	function(){},
 	function(e){ //MOUSECLIKED
 		for(var p = 0; p < points.length; p++){
 			points[p].speedX *= -1;
@@ -180,6 +186,55 @@ levels.push(new Level('Touchez 3 boules !',
     		this.bowlsPlaced++;
 		}
 	}));
+levels.push(new Level('Touchez 3 boules rouges !',
+			function(){
+		for(var p = 0; p < 10; p++){
+			var color = randomColor();
+			while(color == '#FF4B47'){
+				color = randomColor();
+			}
+			points.push(new Point(WIDTH/2,HEIGHT/2, color));
+		}
+		for(var p = points.length; p < 42; p++){
+			points.push(new Point(WIDTH/2,HEIGHT/2, '#FF4B47'));
+		}
+		this.bowlsPlaced = 0;
+		this.alpha = 0;
+	    },
+		function(){ //LOGIC
+			for(var p = 0; p < points.length; p++){
+				for(var m = 0; m < mousePoints.length; m++){
+					if(points[p].inCollision(mousePoints[m]) &&
+							pointsTouched.indexOf(points[p]) == -1
+							&& points[p].color == '#FF4B47'){
+						pointsTouched.push(points[p]);
+					}
+				}
+			}
+	        if(this.bowlsPlaced > 4 && mousePoints.length == 0){
+	            lost();
+	            return;
+	        }
+			if(pointsTouched.length >= 3){
+				nextLevel();
+			}
+			this.alpha += 0.05;
+		},
+		function(){ //DRAW
+			ctx.translate(WIDTH/2,HEIGHT/2);
+		    ctx.rotate(this.alpha);
+			ctx.translate(-WIDTH/2,-HEIGHT/2);
+		},
+		function(e){ //MOUSECLIKED
+			for(var p = 0; p < points.length; p++){
+				points[p].speedX *= -1;
+				points[p].speedY *= -1;
+			}
+			if(this.bowlsPlaced < 5){
+	    		mousePoints.push(new Point(e.clientX, e.clientY));
+	    		this.bowlsPlaced++;
+			}
+}));
 
 
 
@@ -236,6 +291,7 @@ var date = new Date();
 nextLevel();
 
 function loop(){
+
 	ctx.fillStyle = 'black';
 	ctx.fillRect(0, 0, WIDTH, HEIGHT);
 	ctx.fillStyle = 'white';
@@ -262,6 +318,8 @@ function loop(){
 		ctx.font = '72px serif';
         ctx.fillText('.GG HUMAN.', WIDTH/2 - 200, HEIGHT/2);
 	}
+	ctx.save();
+	levels[currentLevel].draw();
 
 	/*for(var p = 0; p < points.length; p++){
 		// add linear gradient
@@ -292,7 +350,7 @@ function loop(){
 		ctx.arc(points[p].x, points[p].y, points[p].radius, 0, 2 * Math.PI, false);
 		ctx.fill();
 	}
-	var mouseNeedDeleted = -1;
+
 	ctx.beginPath();
 	ctx.fillStyle = 'white';
 	ctx.shadowOffsetX = 0;
@@ -302,17 +360,11 @@ function loop(){
 	for(var p = 0; p < mousePoints.length; p++){
 		ctx.moveTo(mousePoints[p].x, mousePoints[p].y);
 		ctx.arc(mousePoints[p].x, mousePoints[p].y,
-				mousePoints[p].radius+mousePoints[p].time, 0, 2 * Math.PI, false);
+				mousePoints[p].radius+mousePoints[p].radius, 0, 2 * Math.PI, false);
 
-		mousePoints[p].time+=0.15;
-		if(mousePoints[p].time >= 16){
-			mouseNeedDeleted = p;
-		}
 	}
 	ctx.fill();
-	if(mouseNeedDeleted >= 0){
-		mousePoints.splice(mouseNeedDeleted, 1);
-	}
+	ctx.restore();
 	requestAnimationFrame(loop);
 }
 requestAnimationFrame(loop);
@@ -333,6 +385,16 @@ setInterval(function(){
 		}
 		points[p].x += points[p].speedX * points[p].dx;
 		points[p].y += points[p].speedY * points[p].dy;
+	}
+	var mouseNeedDeleted = -1;
+	for(var p = 0; p < mousePoints.length; p++){
+		mousePoints[p].radius+=0.2;
+		if(mousePoints[p].radius >= 14){
+			mouseNeedDeleted = p;
+		}
+	}
+	if(mouseNeedDeleted >= 0){
+		mousePoints.splice(mouseNeedDeleted, 1);
 	}
     if(lostLevel){
         animations['lost'].logic();
