@@ -2,19 +2,21 @@
 <html>
 <head>
 <meta charset="utf-8" />
-<title>No Idea</title>
+<title>Bobow</title>
 </head>
 
 <style>
 body {
 	margin:0px;
 padding:0px;
+cursor:url("mousecursor.ico"), default;
+
 }
 </style>
 
 <body>
 
-<canvas onmouseup="mouseClicked(event)" id="canvasGame">
+<canvas onmousemove="mouseMove(event)" onmouseup="mouseClicked(event)" id="canvasGame">
 </canvas>
 
 <script src="http://code.jquery.com/jquery-1.10.1.min.js"></script>
@@ -46,6 +48,12 @@ function mouseClicked(e){
     hasClicked = true;
 	if(!lostLevel)
 		levels[currentLevel].eventMouseClicked(e);
+}
+var xMouse = 0;
+var yMouse = 0;
+function mouseMove(e){
+	xMouse = e.clientX;
+	yMouse = e.clientY;
 }
 var w = window,
 e = document.documentElement,
@@ -364,6 +372,16 @@ function loop(){
 
 	}
 	ctx.fill();
+
+	//draw mouse
+	ctx.beginPath();
+	ctx.lineWidth = 5;
+	ctx.fillStyle = 'white';
+	ctx.shadowBlur = 1;
+	ctx.arc(xMouse, yMouse, 4, 0, 2 * Math.PI, false);
+	ctx.fill();
+
+
 	ctx.restore();
 	requestAnimationFrame(loop);
 }
