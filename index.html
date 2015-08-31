@@ -231,6 +231,7 @@ function Animation(start, end, bearing){
 }
 var animations = [];
 animations['lost'] = new Animation(0, 16, 0.5);
+animations['win'] = animations['lost'];
 var date = new Date();
 nextLevel();
 
@@ -243,13 +244,24 @@ function loop(){
 	ctx.fillText(levels[currentLevel].goal, 22, 30);
     if(lostLevel){
         ctx.fillStyle = 'white';
-        ctx.font = '42px serif';
         ctx.shadowOffsetX = 0;
         ctx.shadowOffsetY = 0;
         ctx.shadowColor = 'white';
         ctx.shadowBlur = animations['lost'].step;
-        ctx.fillText('RETRY ?', WIDTH/2 - 12, HEIGHT/2);
-    }
+		ctx.font = '30px serif';
+		ctx.fillText('CLICK TO', WIDTH/2 - 42, HEIGHT/2-30);
+		ctx.font = '42px serif';
+        ctx.fillText('RETRY', WIDTH/2 - 42, HEIGHT/2);
+    }else if(win){
+		ctx.fillStyle = 'white';
+        ctx.font = '42px serif';
+        ctx.shadowOffsetX = 0;
+        ctx.shadowOffsetY = 0;
+        ctx.shadowColor = 'white';
+        ctx.shadowBlur = animations['win'].step;
+		ctx.font = '72px serif';
+        ctx.fillText('.GG HUMAN.', WIDTH/2 - 200, HEIGHT/2);
+	}
 
 	/*for(var p = 0; p < points.length; p++){
 		// add linear gradient
@@ -331,7 +343,9 @@ setInterval(function(){
         }
     }else if(!win){
         levels[currentLevel].logic();
-    }
+    }else if(win){
+		animations['win'].logic();
+	}
     hasClicked = false;
 }, 30);
 </script>
