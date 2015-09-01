@@ -2,7 +2,7 @@
 <html>
 <head>
 <meta charset="utf-8" />
-<title>Bobow</title>
+<title>Bobowl</title>
 </head>
 
 <style>
@@ -82,7 +82,7 @@ var Point = function(x, y, color, speedX, speedY){
 		this.color = color;
 	}
 	if(speedX == undefined){
-		this.speedX = random(2, 12);
+		this.speedX = random(2, 7);
 	}else{
 		this.speedX = speedX;
 	}
@@ -95,7 +95,7 @@ var Point = function(x, y, color, speedX, speedY){
 		this.dy *= -1;
 	}
 	if(speedY == undefined){
-		this.speedY = random(2, 12);
+		this.speedY = random(2, 7);
 	}else{
 		this.speedY = speedY;
 	}
