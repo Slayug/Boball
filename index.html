@@ -22,7 +22,13 @@ cursor:url("mouse.png"), default;
 <script src="http://code.jquery.com/jquery-1.10.1.min.js"></script>
 
 <script type="text/javascript">
-
+var lastFrameTimeMs = 0;
+var maxFPS = 120;
+var delta = 0;
+var timestep = 1000 / 120;
+var fps = 120;
+var framesThisSecond = 0;
+var lastFpsUpdate = 0;
 /**
  * requestAnimationFrame
  */
@@ -315,96 +321,122 @@ animations['win'] = animations['lost'];
 
 nextLevel();
 var date = new Date();
-function loop(){
-
-	ctx.fillStyle = 'black';
-	ctx.fillRect(0, 0, WIDTH, HEIGHT);
-	ctx.fillStyle = 'white';
-    ctx.shadowBlur = 0;
-	ctx.font = '24px serif';
-	ctx.fillText(levels[currentLevel].goal, 22, 30);
-    if(lostLevel){
-        ctx.fillStyle = 'white';
-        ctx.shadowOffsetX = 0;
-        ctx.shadowOffsetY = 0;
-        ctx.shadowColor = 'white';
-        ctx.shadowBlur = animations['lost'].step;
-		ctx.font = '30px serif';
-		ctx.fillText('CLICK TO', WIDTH/2 - 42, HEIGHT/2-30);
-		ctx.font = '42px serif';
-        ctx.fillText('RETRY', WIDTH/2 - 42, HEIGHT/2);
-    }else if(win){
-		ctx.fillStyle = 'white';
-        ctx.font = '42px serif';
-        ctx.shadowOffsetX = 0;
-        ctx.shadowOffsetY = 0;
-        ctx.shadowColor = 'white';
-        ctx.shadowBlur = animations['win'].step;
-		ctx.font = '72px serif';
-        ctx.fillText('.GG HUMAN.', WIDTH/2 - 200, HEIGHT/2);
+function loop(timestamp){
+	// Throttle the frame rate.
+	if (timestamp < lastFrameTimeMs + (1000 / maxFPS)) {
+		requestAnimationFrame(loop);
+		return;
 	}
-	ctx.save();
-	levels[currentLevel].draw();
+	delta += timestamp - lastFrameTimeMs;
+	lastFrameTimeMs = timestamp;
 
-	/*for(var p = 0; p < points.length; p++){
-		// add linear gradient
-		ctx.beginPath();
-		var grd = ctx.createRadialGradient(
-					points[p].x, points[p].y,
-					points[p].radius,
-					points[p].radius + points[p].dx*-60,
-					points[p].radius + points[p].dy*-60,
-					points[p].radius);
-		var rgb = hexToRgb(points[p].color);
-		grd.addColorStop(0, 'rgba('+rgb.r+','+rgb.g+','+rgb.b+', 0.1)');
-		grd.addColorStop(1, 'rgba('+rgb.r+','+rgb.g+','+rgb.b+', 1)');
-		ctx.strokeStyle = grd;
-		ctx.lineWidth = points[p].radius*2;
-		ctx.moveTo(points[p].x,points[p].y);
-		ctx.lineTo(points[p].x + points[p].dx * -60,
-					points[p].y + points[p].dy * -60);
-		ctx.stroke();
+	if (timestamp > lastFpsUpdate + 1000) {
+		fps = 0.25 * framesThisSecond + 0.75 * fps;
+
+		lastFpsUpdate = timestamp;
+		framesThisSecond = 0;
 	}
-*/
-	for(var p = 0; p < points.length; p++){
-	//bowl
-		ctx.beginPath();
-		ctx.fillStyle = points[p].color;
-		ctx.shadowBlur = 16;
-		ctx.shadowColor = points[p].color;
-		ctx.arc(points[p].x, points[p].y, points[p].radius, 0, 2 * Math.PI, false);
-		ctx.fill();
+	framesThisSecond++;
+	var numUpdateSteps = 0;
+	while (delta >= timestep) {
+		update(timestep);
+		delta -= timestep;
+		if (++numUpdateSteps >= 240) {
+			panic();
+			break;
+		}
 	}
-
-	ctx.beginPath();
-	ctx.fillStyle = 'white';
-	ctx.shadowOffsetX = 0;
-	ctx.shadowOffsetY = 0;
-	ctx.shadowBlur = 20;
-	ctx.shadowColor = 'white';
-	for(var p = 0; p < mousePoints.length; p++){
-		ctx.moveTo(mousePoints[p].x, mousePoints[p].y);
-		ctx.arc(mousePoints[p].x, mousePoints[p].y,
-				mousePoints[p].radius+mousePoints[p].radius, 0, 2 * Math.PI, false);
-
-	}
-	ctx.fill();
-
-	//draw mouse
-	ctx.beginPath();
-	ctx.lineWidth = 9;
-	ctx.fillStyle = 'white';
-	ctx.shadowBlur = 1;
-	ctx.arc(xMouse, yMouse, 4, 0, 2 * Math.PI, false);
-	ctx.fill();
-
-
-	ctx.restore();
+	draw();
 	requestAnimationFrame(loop);
+}
+function draw(){
+
+		ctx.fillStyle = 'black';
+		ctx.fillRect(0, 0, WIDTH, HEIGHT);
+		ctx.fillStyle = 'white';
+	    ctx.shadowBlur = 0;
+		ctx.font = '24px serif';
+		ctx.fillText(levels[currentLevel].goal, 22, 30);
+	    if(lostLevel){
+	        ctx.fillStyle = 'white';
+	        ctx.shadowOffsetX = 0;
+	        ctx.shadowOffsetY = 0;
+	        ctx.shadowColor = 'white';
+	        ctx.shadowBlur = animations['lost'].step;
+			ctx.font = '30px serif';
+			ctx.fillText('CLICK TO', WIDTH/2 - 42, HEIGHT/2-30);
+			ctx.font = '42px serif';
+	        ctx.fillText('RETRY', WIDTH/2 - 42, HEIGHT/2);
+	    }else if(win){
+			ctx.fillStyle = 'white';
+	        ctx.font = '42px serif';
+	        ctx.shadowOffsetX = 0;
+	        ctx.shadowOffsetY = 0;
+	        ctx.shadowColor = 'white';
+	        ctx.shadowBlur = animations['win'].step;
+			ctx.font = '72px serif';
+	        ctx.fillText('.GG HUMAN.', WIDTH/2 - 200, HEIGHT/2);
+		}
+		ctx.save();
+		levels[currentLevel].draw();
+
+		/*for(var p = 0; p < points.length; p++){
+			// add linear gradient
+			ctx.beginPath();
+			var grd = ctx.createRadialGradient(
+						points[p].x, points[p].y,
+						points[p].radius,
+						points[p].radius + points[p].dx*-60,
+						points[p].radius + points[p].dy*-60,
+						points[p].radius);
+			var rgb = hexToRgb(points[p].color);
+			grd.addColorStop(0, 'rgba('+rgb.r+','+rgb.g+','+rgb.b+', 0.1)');
+			grd.addColorStop(1, 'rgba('+rgb.r+','+rgb.g+','+rgb.b+', 1)');
+			ctx.strokeStyle = grd;
+			ctx.lineWidth = points[p].radius*2;
+			ctx.moveTo(points[p].x,points[p].y);
+			ctx.lineTo(points[p].x + points[p].dx * -60,
+						points[p].y + points[p].dy * -60);
+			ctx.stroke();
+		}
+	*/
+		for(var p = 0; p < points.length; p++){
+		//bowl
+			ctx.beginPath();
+			ctx.fillStyle = points[p].color;
+			ctx.shadowBlur = 16;
+			ctx.shadowColor = points[p].color;
+			ctx.arc(points[p].x, points[p].y, points[p].radius, 0, 2 * Math.PI, false);
+			ctx.fill();
+		}
+
+		ctx.beginPath();
+		ctx.fillStyle = 'white';
+		ctx.shadowOffsetX = 0;
+		ctx.shadowOffsetY = 0;
+		ctx.shadowBlur = 20;
+		ctx.shadowColor = 'white';
+		for(var p = 0; p < mousePoints.length; p++){
+			ctx.moveTo(mousePoints[p].x, mousePoints[p].y);
+			ctx.arc(mousePoints[p].x, mousePoints[p].y,
+					mousePoints[p].radius+mousePoints[p].radius, 0, 2 * Math.PI, false);
+
+		}
+		ctx.fill();
+
+		//draw mouse
+		ctx.beginPath();
+		ctx.lineWidth = 9;
+		ctx.fillStyle = 'white';
+		ctx.shadowBlur = 1;
+		ctx.arc(xMouse, yMouse, 4, 0, 2 * Math.PI, false);
+		ctx.fill();
+
+		ctx.restore();
 }
 requestAnimationFrame(loop);
 
-setInterval(function(){
+function update(){
 	date = new Date();
 	for(var p = 0; p < points.length; p++){
 		if(points[p].x + points[p].speedX * points[p].dx >= WIDTH){
@@ -445,7 +477,7 @@ setInterval(function(){
 		animations['win'].logic();
 	}
     hasClicked = false;
-}, 1000/60);
+}
 </script>
 </body>
 </html>
