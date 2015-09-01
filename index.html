@@ -9,7 +9,7 @@
 body {
 	margin:0px;
 padding:0px;
-cursor:url("mousecursor.ico"), default;
+cursor:url("mouse.png"), default;
 
 }
 </style>
@@ -203,13 +203,19 @@ levels.push(new Level('Touchez 3 boules rouges !',
 			}
 			points.push(new Point(WIDTH/2,HEIGHT/2, color));
 		}
-		for(var p = points.length; p < 42; p++){
+		for(var p = points.length; p < 20; p++){
 			points.push(new Point(WIDTH/2,HEIGHT/2, '#FF4B47'));
 		}
 		this.bowlsPlaced = 0;
 		this.alpha = 0;
 	    },
 		function(){ //LOGIC
+			if(this.alpha <= Math.PI){
+				this.alpha += 0.02;
+				animations['win'].logic();
+				return;
+			}
+
 			for(var p = 0; p < points.length; p++){
 				for(var m = 0; m < mousePoints.length; m++){
 					if(points[p].inCollision(mousePoints[m]) &&
@@ -226,14 +232,25 @@ levels.push(new Level('Touchez 3 boules rouges !',
 			if(pointsTouched.length >= 3){
 				nextLevel();
 			}
-			this.alpha += 0.05;
 		},
 		function(){ //DRAW
-			ctx.translate(WIDTH/2,HEIGHT/2);
-		    ctx.rotate(this.alpha);
-			ctx.translate(-WIDTH/2,-HEIGHT/2);
+			if(this.alpha <= Math.PI){
+				ctx.shadowColor = 'white';
+		        ctx.shadowBlur = animations['win'].step;
+				ctx.font = '42px serif';
+		        ctx.fillText('LOADING', WIDTH/2 - 55, HEIGHT/2);
+				ctx.translate(WIDTH/2,HEIGHT/2);
+			    ctx.rotate(this.alpha);
+				ctx.translate(-WIDTH/2,-HEIGHT/2);
+			}else{
+				ctx.translate(WIDTH/2,HEIGHT/2);
+			    ctx.rotate(this.alpha);
+				ctx.translate(-WIDTH/2,-HEIGHT/2);
+			}
 		},
 		function(e){ //MOUSECLIKED
+			if(this.alpha <= Math.PI)
+				return;
 			for(var p = 0; p < points.length; p++){
 				points[p].speedX *= -1;
 				points[p].speedY *= -1;
@@ -295,9 +312,9 @@ function Animation(start, end, bearing){
 var animations = [];
 animations['lost'] = new Animation(0, 16, 0.5);
 animations['win'] = animations['lost'];
-var date = new Date();
-nextLevel();
 
+nextLevel();
+var date = new Date();
 function loop(){
 
 	ctx.fillStyle = 'black';
@@ -375,7 +392,7 @@ function loop(){
 
 	//draw mouse
 	ctx.beginPath();
-	ctx.lineWidth = 5;
+	ctx.lineWidth = 9;
 	ctx.fillStyle = 'white';
 	ctx.shadowBlur = 1;
 	ctx.arc(xMouse, yMouse, 4, 0, 2 * Math.PI, false);
@@ -388,6 +405,7 @@ function loop(){
 requestAnimationFrame(loop);
 
 setInterval(function(){
+	date = new Date();
 	for(var p = 0; p < points.length; p++){
 		if(points[p].x + points[p].speedX * points[p].dx >= WIDTH){
 			points[p].dx *= -1;
@@ -427,7 +445,7 @@ setInterval(function(){
 		animations['win'].logic();
 	}
     hasClicked = false;
-}, 30);
+}, 1000/60);
 </script>
 </body>
 </html>
