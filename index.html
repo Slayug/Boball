@@ -131,7 +131,7 @@ function randomColor(){
 var points = [];
 var pointsTouched = [];
 var mousePoints = [];
-var currentLevel = -1;
+var currentLevel = 2;
 var levels = [];
 
 
@@ -159,6 +159,18 @@ levels.push(new Level('Place one bowl and capture an other with the first !',
 				return;
 			}
 		}
+
+		var mouseNeedDeleted = -1;
+		for(var p = 0; p < mousePoints.length; p++){
+			mousePoints[p].radius+=0.1;
+			if(mousePoints[p].radius >= 14){
+				mouseNeedDeleted = p;
+			}
+		}
+		if(mouseNeedDeleted >= 0){
+			mousePoints.splice(mouseNeedDeleted, 1);
+		}
+
 		for(var p = 0; p < points.length; p++){
 			for(var m = 0; m < mousePoints.length; m++){
 				if(points[p].inCollision(mousePoints[m]) &&
@@ -172,7 +184,7 @@ levels.push(new Level('Place one bowl and capture an other with the first !',
 			nextLevel();
 		}
 	},
-	function(){
+	function(){ //DRAW
 		if(!this.ready){
 
 			ctx.strokeStyle="white";
@@ -213,6 +225,18 @@ levels.push(new Level('3 Bowls this time !',
 	}this.bowlsPlaced = 0;
     },
 	function(){ //LOGIC
+
+		var mouseNeedDeleted = -1;
+		for(var p = 0; p < mousePoints.length; p++){
+			mousePoints[p].radius+=0.1;
+			if(mousePoints[p].radius >= 14){
+				mouseNeedDeleted = p;
+			}
+		}
+		if(mouseNeedDeleted >= 0){
+			mousePoints.splice(mouseNeedDeleted, 1);
+		}
+
 		for(var p = 0; p < points.length; p++){
 			for(var m = 0; m < mousePoints.length; m++){
 				if(points[p].inCollision(mousePoints[m]) &&
@@ -264,6 +288,18 @@ levels.push(new Level('Try 3 red bowls !',
 				animations['win'].logic();
 				return;
 			}
+
+			var mouseNeedDeleted = -1;
+			for(var p = 0; p < mousePoints.length; p++){
+				mousePoints[p].radius+=0.1;
+				if(mousePoints[p].radius >= 14){
+					mouseNeedDeleted = p;
+				}
+			}
+			if(mouseNeedDeleted >= 0){
+				mousePoints.splice(mouseNeedDeleted, 1);
+			}
+
 			for(var p = 0; p < points.length; p++){
 				for(var m = 0; m < mousePoints.length; m++){
 					if(points[p].inCollision(mousePoints[m]) &&
@@ -319,12 +355,23 @@ levels.push(new Level('You have a new power, place two bowls to try. After that 
 				animations['win'].logic();
 				return;
 			}
+
+			for(var p = 0; p < mousePoints.length; p++){
+				if(mousePoints[p].radius < 14){
+					mousePoints[p].radius+=0.1;
+				}
+			}
+
 			for(var p = 0; p < points.length; p++){
 				for(var m = 0; m < mousePoints.length; m++){
 					if(points[p].inCollision(mousePoints[m]) &&
-							pointsTouched.indexOf(points[p]) == -1
-							&& points[p].color == '#FF4B47'){
-						pointsTouched.push(points[p]);
+							pointsTouched.indexOf(points[p]) == -1){
+						if(m % 2 != 0){
+							var 
+
+							pointsTouched.push(points[p]);
+
+						}
 					}
 				}
 			}
@@ -344,6 +391,7 @@ levels.push(new Level('You have a new power, place two bowls to try. After that 
 		        ctx.fillText('LOADING', WIDTH/2 - 55, HEIGHT/2);
 			}else{
 				ctx.beginPath();
+				ctx.strokeStyle='white';
 				for(var m = 0; m < mousePoints.length; m++){
 					if(m % 2 != 0){
 						ctx.moveTo(mousePoints[m-1].x, mousePoints[m-1].y);
@@ -358,17 +406,24 @@ levels.push(new Level('You have a new power, place two bowls to try. After that 
 				return;
 			if(!this.firstClick){
 				new Message('Oups, sorry i have one bug with this click..',
-							100, 100, 7, null);
+							100, 100, 7000, null);
 				new Message('Deal with it !',
-							100, 140, 7, null);
+							100, 140, 7000, null);
+				this.firstClick = true;
 			}
 			for(var p = 0; p < points.length; p++){
 				points[p].speedX *= -1;
 				points[p].speedY *= -1;
 			}
-			if(this.bowlsPlaced < 5){
-	    		mousePoints.push(new Point(e.clientX, e.clientY));
-	    		this.bowlsPlaced++;
+			if(e.button == 0){
+				if(this.bowlsPlaced < 4){
+		    		mousePoints.push(new Point(e.clientX, e.clientY));
+		    		this.bowlsPlaced++;
+				}else{
+					lost();
+					hasClicked = false;
+					return;
+				}
 			}
 }));
 
@@ -412,7 +467,7 @@ function Message(msg, x, y, time, animation){
 	this.time = time;
 	this.animation = animation;
 	this.logic = function(){
-		if(this.startTime + this.time > Date.now()){
+		if(this.startTime + this.time < Date.now()){
 			messages.splice(messages.indexOf(this), 1);
 			return;
 		}
@@ -572,16 +627,7 @@ function update(){
 		points[p].x += points[p].speedX * points[p].dx;
 		points[p].y += points[p].speedY * points[p].dy;
 	}
-	var mouseNeedDeleted = -1;
-	for(var p = 0; p < mousePoints.length; p++){
-		mousePoints[p].radius+=0.1;
-		if(mousePoints[p].radius >= 14){
-			mouseNeedDeleted = p;
-		}
-	}
-	if(mouseNeedDeleted >= 0){
-		mousePoints.splice(mouseNeedDeleted, 1);
-	}
+
     if(lostLevel){
         animations['lost'].logic();
         if(hasClicked){
