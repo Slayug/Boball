@@ -75,11 +75,19 @@ var WIDTH = widthW;
 var HEIGHT = heightW - 4;
 var hasClicked = false;
 var alpha = 0;
-var Point = function(x, y, color, speedX, speedY){
+var Point = function(x, y, color, dx, dy, speedX, speedY){
 	this.x = x;
 	this.y = y;
-	this.dx = parseInt(Math.random()*1000)/1000;
-	this.dy = parseInt(Math.random()*1000)/1000;
+	if(dx == undefined)
+		this.dx = parseInt(Math.random()*100)/100;
+	else
+		this.dx = dx;
+	if(dy == undefined)
+		this.dy = parseInt(Math.random()*100)/100;
+	else
+		this.dy = dy;
+	console.log(this.dx);
+	console.log(this.dy);
 	if(color == undefined){
 		this.color = randomColor();
 	}else{
@@ -343,8 +351,10 @@ levels.push(new Level('Try 3 red bowls !',
 }));
 levels.push(new Level('You have a new power, place two bowls to try. After that capture 5 bowls with those arcs.',
 			function(){
+		var rdmDx = parseInt(Math.random()*10)/10;
+		var rdmDy = parseInt(Math.random()*10)/10;
 		for(var p = 0; p < 4; p++){
-			points.push(new Point(WIDTH/2,HEIGHT/2, randomColor()));
+			points.push(new Point(WIDTH/2,HEIGHT/2, randomColor(), rdmDx, rdmDy));
 		}
 		this.bowlsPlaced = 0;
 		this.firstClick = false;
@@ -362,15 +372,16 @@ levels.push(new Level('You have a new power, place two bowls to try. After that 
 				}
 			}
 
-			for(var p = 0; p < points.length; p++){
-				for(var m = 0; m < mousePoints.length; m++){
-					if(points[p].inCollision(mousePoints[m]) &&
-							pointsTouched.indexOf(points[p]) == -1){
-						if(m % 2 != 0){
-							var 
 
-							pointsTouched.push(points[p]);
+			for(var m = 0; m < mousePoints.length; m++){
+				if(m % 2 != 0){
+					var a = (mousePoints[m-1].y - mousePoints[m].y) /
+						(mousePoints[m-1].x - mousePoints[m].x);
+					var b = a * mousePoints[m].x - mousePoints[m].y;
 
+					for(var p = 0; p < points.length; p++){
+						if(a * points[p].x + b == points[p].y){
+							console.log('coll');
 						}
 					}
 				}
@@ -391,6 +402,7 @@ levels.push(new Level('You have a new power, place two bowls to try. After that 
 		        ctx.fillText('LOADING', WIDTH/2 - 55, HEIGHT/2);
 			}else{
 				ctx.beginPath();
+				ctx.lineWidth = 4;
 				ctx.strokeStyle='white';
 				for(var m = 0; m < mousePoints.length; m++){
 					if(m % 2 != 0){
