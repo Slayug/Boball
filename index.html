@@ -343,9 +343,14 @@ levels.push(new Level('You have a new power, place two bowls to try. After that 
 				ctx.font = '42px serif';
 		        ctx.fillText('LOADING', WIDTH/2 - 55, HEIGHT/2);
 			}else{
+				ctx.beginPath();
 				for(var m = 0; m < mousePoints.length; m++){
-
+					if(m % 2 != 0){
+						ctx.moveTo(mousePoints[m-1].x, mousePoints[m-1].y);
+						ctx.lineTo(mousePoints[m].x, mousePoints[m].y);
+					}
 				}
+				ctx.stroke();
 			}
 		},
 		function(e){ //MOUSECLIKED
