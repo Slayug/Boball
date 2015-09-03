@@ -14,7 +14,7 @@ cursor:url("mouse.png"), default;
 }
 </style>
 
-<body>
+<body onselectstart="return false"  oncontextmenu="return false">
 
 <canvas onmousemove="mouseMove(event)" onmouseup="mouseClicked(event)" id="canvasGame">
 </canvas>
@@ -42,8 +42,11 @@ window.requestAnimationFrame = (function(){
                 window.setTimeout(callback, 1000 / 60);
             };
 })();
-
-
+if (!Date.now) {
+  Date.now = function now() {
+    return new Date().getTime();
+  };
+}
 var elem = document.getElementById('canvasGame');
 
 var ctx = elem.getContext('2d');
@@ -71,6 +74,7 @@ ctx.canvas.height = heightW - 4;
 var WIDTH = widthW;
 var HEIGHT = heightW - 4;
 var hasClicked = false;
+var alpha = 0;
 var Point = function(x, y, color, speedX, speedY){
 	this.x = x;
 	this.y = y;
@@ -140,16 +144,26 @@ function Level(goal, fctGeneration, logic, draw, fctMouseClicked){
 	this.draw = draw;
 	this.eventMouseClicked = fctMouseClicked;
 }
-levels.push(new Level('Touchez 1 boule !',
-		function(){
-	for(var p = 0; p < 72; p++){
-		points.push(new Point(WIDTH/2,HEIGHT/2));
-	}},
+levels.push(new Level('Place one bowl and capture an other with the first !',
+	function(){
+		for(var p = 0; p < 72; p++){
+			points.push(new Point(WIDTH/2,HEIGHT/2));
+		}
+		this.ready = false;
+	},
 	function(){ //LOGIC
+		if(!this.ready){
+			if(hasClicked){
+				this.ready = true;
+			}else{
+				return;
+			}
+		}
 		for(var p = 0; p < points.length; p++){
 			for(var m = 0; m < mousePoints.length; m++){
 				if(points[p].inCollision(mousePoints[m]) &&
 						pointsTouched.indexOf(mousePoints[m]) == -1){
+					points[p].color = 'white';
 					pointsTouched.push(points[p]);
 				}
 			}
@@ -158,15 +172,41 @@ levels.push(new Level('Touchez 1 boule !',
 			nextLevel();
 		}
 	},
-	function(){},
-	function(e){ //MOUSECLIKED
-		for(var p = 0; p < points.length; p++){
-			points[p].speedX *= -1;
-			points[p].speedY *= -1;
+	function(){
+		if(!this.ready){
+
+			ctx.strokeStyle="white";
+			ctx.lineWidth="10";
+			ctx.moveTo(200, 55);
+			ctx.lineTo(200, HEIGHT * 0.42);
+			ctx.moveTo(202, 55);
+			ctx.lineTo(150, 100);
+			ctx.moveTo(198, 55);
+			ctx.lineTo(250, 100);
+			ctx.stroke();
+			ctx.fillText('LEVEL INSTRUCTION', 100, HEIGHT * 0.42 + 25);
+
+			ctx.shadowColor = randomColor();
+			ctx.shadowBlur="50";
+			ctx.font = '42px serif';
+			ctx.fillText('Mouse Left: Put one bowl', WIDTH/2 - 160, HEIGHT/2 - 20);
+			ctx.fillText('Mouse Right: Inverse the time', WIDTH/2 - 185, HEIGHT/2 + 22);
+			ctx.fillText('Click to start.', WIDTH/2 - 50, HEIGHT/2 + 62);
 		}
-		mousePoints.push(new Point(e.clientX, e.clientY));
+	},
+	function(e){ //MOUSECLIKED
+		if(!this.ready)
+			return;
+		if(e.button > 0){
+			for(var p = 0; p < points.length; p++){
+				points[p].speedX *= -1;
+				points[p].speedY *= -1;
+			}
+		}else{
+			mousePoints.push(new Point(e.clientX, e.clientY));
+		}
 	}));
-levels.push(new Level('Touchez 3 boules !',
+levels.push(new Level('3 Bowls this time !',
 		function(){
 	for(var p = 0; p < 16; p++){
 		points.push(new Point(WIDTH/2,HEIGHT/2));
@@ -177,6 +217,7 @@ levels.push(new Level('Touchez 3 boules !',
 			for(var m = 0; m < mousePoints.length; m++){
 				if(points[p].inCollision(mousePoints[m]) &&
 						pointsTouched.indexOf(points[p]) == -1){
+					points[p].color = 'white';
 					pointsTouched.push(points[p]);
 				}
 			}
@@ -189,18 +230,21 @@ levels.push(new Level('Touchez 3 boules !',
 			nextLevel();
 		}
 	},
-	function(){},
+	function(){ //DRAW
+	},
 	function(e){ //MOUSECLIKED
-		for(var p = 0; p < points.length; p++){
-			points[p].speedX *= -1;
-			points[p].speedY *= -1;
-		}
+		if(e.button > 0){
+			for(var p = 0; p < points.length; p++){
+				points[p].speedX *= -1;
+				points[p].speedY *= -1;
+			}
+		}else{
 		if(this.bowlsPlaced < 3){
     		mousePoints.push(new Point(e.clientX, e.clientY));
     		this.bowlsPlaced++;
-		}
+		}}
 	}));
-levels.push(new Level('Touchez 3 boules rouges !',
+levels.push(new Level('Try 3 red bowls !',
 			function(){
 		for(var p = 0; p < 10; p++){
 			var color = randomColor();
@@ -213,15 +257,68 @@ levels.push(new Level('Touchez 3 boules rouges !',
 			points.push(new Point(WIDTH/2,HEIGHT/2, '#FF4B47'));
 		}
 		this.bowlsPlaced = 0;
-		this.alpha = 0;
 	    },
 		function(){ //LOGIC
-			if(this.alpha <= Math.PI){
-				this.alpha += 0.02;
+			if(alpha <= Math.PI){
+				alpha += 0.02;
 				animations['win'].logic();
 				return;
 			}
-
+			for(var p = 0; p < points.length; p++){
+				for(var m = 0; m < mousePoints.length; m++){
+					if(points[p].inCollision(mousePoints[m]) &&
+							pointsTouched.indexOf(points[p]) == -1
+							&& points[p].color == '#FF4B47'){
+						points[p].color = 'white';
+						pointsTouched.push(points[p]);
+					}
+				}
+			}
+	        if(this.bowlsPlaced > 4 && mousePoints.length == 0){
+	            lost();
+	            return;
+	        }
+			if(pointsTouched.length >= 3){
+				nextLevel();
+			}
+		},
+		function(){ //DRAW
+			if(alpha <= Math.PI){
+				ctx.shadowColor = 'white';
+		        ctx.shadowBlur = animations['win'].step;
+				ctx.font = '42px serif';
+		        ctx.fillText('LOADING', WIDTH/2 - 55, HEIGHT/2);
+			}
+		},
+		function(e){ //MOUSECLIKED
+			if(alpha <= Math.PI)
+				return;
+			if(e.button > 0){
+				for(var p = 0; p < points.length; p++){
+					points[p].speedX *= -1;
+					points[p].speedY *= -1;
+				}
+			}else{
+				if(this.bowlsPlaced < 5){
+		    		mousePoints.push(new Point(e.clientX, e.clientY));
+		    		this.bowlsPlaced++;
+				}
+			}
+}));
+levels.push(new Level('You have a new power, place two bowls to try. After that capture 5 bowls with those arcs.',
+			function(){
+		for(var p = 0; p < 4; p++){
+			points.push(new Point(WIDTH/2,HEIGHT/2, randomColor()));
+		}
+		this.bowlsPlaced = 0;
+		this.firstClick = false;
+	    },
+		function(){ //LOGIC
+			if(alpha < 2*Math.PI){
+				alpha += 0.02;
+				animations['win'].logic();
+				return;
+			}
 			for(var p = 0; p < points.length; p++){
 				for(var m = 0; m < mousePoints.length; m++){
 					if(points[p].inCollision(mousePoints[m]) &&
@@ -236,27 +333,30 @@ levels.push(new Level('Touchez 3 boules rouges !',
 	            return;
 	        }
 			if(pointsTouched.length >= 3){
-				nextLevel();
+				//nextLevel();
 			}
 		},
 		function(){ //DRAW
-			if(this.alpha <= Math.PI){
+			if(alpha < 2*Math.PI){
 				ctx.shadowColor = 'white';
 		        ctx.shadowBlur = animations['win'].step;
 				ctx.font = '42px serif';
 		        ctx.fillText('LOADING', WIDTH/2 - 55, HEIGHT/2);
-				ctx.translate(WIDTH/2,HEIGHT/2);
-			    ctx.rotate(this.alpha);
-				ctx.translate(-WIDTH/2,-HEIGHT/2);
 			}else{
-				ctx.translate(WIDTH/2,HEIGHT/2);
-			    ctx.rotate(this.alpha);
-				ctx.translate(-WIDTH/2,-HEIGHT/2);
+				for(var m = 0; m < mousePoints.length; m++){
+
+				}
 			}
 		},
 		function(e){ //MOUSECLIKED
-			if(this.alpha <= Math.PI)
+			if(alpha < 2*Math.PI)
 				return;
+			if(!this.firstClick){
+				new Message('Oups, sorry i have one bug with this click..',
+							100, 100, 7, null);
+				new Message('Deal with it !',
+							100, 140, 7, null);
+			}
 			for(var p = 0; p < points.length; p++){
 				points[p].speedX *= -1;
 				points[p].speedY *= -1;
@@ -268,11 +368,9 @@ levels.push(new Level('Touchez 3 boules rouges !',
 }));
 
 
-
 function nextLevel(){
 	reset();
 	if(currentLevel == levels.length - 1){
-		console.log('WIN');
         win = true;
 		return;
 	}
@@ -299,7 +397,30 @@ function hexToRgb(hex) {
 	};
 }
 
-
+var messages = [];
+//time in ms
+//animation str
+function Message(msg, x, y, time, animation){
+	this.msg = msg;
+	this.x = x;
+	this.y = y;
+	this.time = time;
+	this.animation = animation;
+	this.logic = function(){
+		if(this.startTime + this.time > Date.now()){
+			messages.splice(messages.indexOf(this), 1);
+			return;
+		}
+		if(this.animation != null)
+			animations[this.animation].logic();
+	}
+	this.draw = function(){
+		ctx.font = '30px serif';
+		ctx.fillText(this.msg, this.x, this.y);
+	}
+	this.startTime = Date.now();
+	messages.push(this);
+}
 function Animation(start, end, bearing){
     this.start = start;
     this.sens = 1;
@@ -316,11 +437,10 @@ function Animation(start, end, bearing){
     }
 }
 var animations = [];
-animations['lost'] = new Animation(0, 16, 0.5);
+animations['lost'] = new Animation(0, 16, 0.4);
 animations['win'] = animations['lost'];
 
 nextLevel();
-var date = new Date();
 function loop(timestamp){
 	// Throttle the frame rate.
 	if (timestamp < lastFrameTimeMs + (1000 / maxFPS)) {
@@ -353,6 +473,8 @@ function draw(){
 
 		ctx.fillStyle = 'black';
 		ctx.fillRect(0, 0, WIDTH, HEIGHT);
+		//ctx.clearRect(0, 0, WIDTH, HEIGHT);
+
 		ctx.fillStyle = 'white';
 	    ctx.shadowBlur = 0;
 		ctx.font = '24px serif';
@@ -379,50 +501,37 @@ function draw(){
 		}
 		ctx.save();
 		levels[currentLevel].draw();
-
-		/*for(var p = 0; p < points.length; p++){
-			// add linear gradient
-			ctx.beginPath();
-			var grd = ctx.createRadialGradient(
-						points[p].x, points[p].y,
-						points[p].radius,
-						points[p].radius + points[p].dx*-60,
-						points[p].radius + points[p].dy*-60,
-						points[p].radius);
-			var rgb = hexToRgb(points[p].color);
-			grd.addColorStop(0, 'rgba('+rgb.r+','+rgb.g+','+rgb.b+', 0.1)');
-			grd.addColorStop(1, 'rgba('+rgb.r+','+rgb.g+','+rgb.b+', 1)');
-			ctx.strokeStyle = grd;
-			ctx.lineWidth = points[p].radius*2;
-			ctx.moveTo(points[p].x,points[p].y);
-			ctx.lineTo(points[p].x + points[p].dx * -60,
-						points[p].y + points[p].dy * -60);
-			ctx.stroke();
-		}
-	*/
-		for(var p = 0; p < points.length; p++){
-		//bowl
-			ctx.beginPath();
-			ctx.fillStyle = points[p].color;
-			ctx.shadowBlur = 16;
-			ctx.shadowColor = points[p].color;
-			ctx.arc(points[p].x, points[p].y, points[p].radius, 0, 2 * Math.PI, false);
-			ctx.fill();
-		}
-
+		ctx.translate(WIDTH/2,HEIGHT/2);
+		ctx.rotate(this.alpha);
+		ctx.translate(-WIDTH/2,-HEIGHT/2);
+	for(var p = 0; p < points.length; p++){
+	//bowl
 		ctx.beginPath();
-		ctx.fillStyle = 'white';
-		ctx.shadowOffsetX = 0;
-		ctx.shadowOffsetY = 0;
-		ctx.shadowBlur = 20;
-		ctx.shadowColor = 'white';
-		for(var p = 0; p < mousePoints.length; p++){
-			ctx.moveTo(mousePoints[p].x, mousePoints[p].y);
-			ctx.arc(mousePoints[p].x, mousePoints[p].y,
-					mousePoints[p].radius+mousePoints[p].radius, 0, 2 * Math.PI, false);
-
-		}
+		ctx.fillStyle = points[p].color;
+		ctx.shadowBlur = 16;
+		ctx.shadowColor = points[p].color;
+		ctx.arc(points[p].x, points[p].y, points[p].radius, 0, 2 * Math.PI, false);
 		ctx.fill();
+	}
+	ctx.beginPath();
+	ctx.fillStyle = 'white';
+	ctx.shadowOffsetX = 0;
+	ctx.shadowOffsetY = 0;
+	ctx.shadowBlur = 20;
+	ctx.shadowColor = 'white';
+	for(var p = 0; p < mousePoints.length; p++){
+		ctx.moveTo(mousePoints[p].x, mousePoints[p].y);
+		ctx.arc(mousePoints[p].x, mousePoints[p].y,
+				mousePoints[p].radius+mousePoints[p].radius, 0, 2 * Math.PI, false);
+
+
+	}
+	ctx.fill();
+
+
+	for(var m = 0; m < messages.length; m++){
+		messages[m].draw();
+	}
 
 		//draw mouse
 		ctx.beginPath();
@@ -434,10 +543,14 @@ function draw(){
 
 		ctx.restore();
 }
-requestAnimationFrame(loop);
-
+function panic() {
+    delta = 0;
+	ctx.clearRect(0, 0, WIDTH, HEIGHT);
+}
 function update(){
-	date = new Date();
+	for(var m = 0; m < messages.length; m++){
+		messages[m].logic();
+	}
 	for(var p = 0; p < points.length; p++){
 		if(points[p].x + points[p].speedX * points[p].dx >= WIDTH){
 			points[p].dx *= -1;
@@ -456,7 +569,7 @@ function update(){
 	}
 	var mouseNeedDeleted = -1;
 	for(var p = 0; p < mousePoints.length; p++){
-		mousePoints[p].radius+=0.2;
+		mousePoints[p].radius+=0.1;
 		if(mousePoints[p].radius >= 14){
 			mouseNeedDeleted = p;
 		}
@@ -478,6 +591,7 @@ function update(){
 	}
     hasClicked = false;
 }
+requestAnimationFrame(loop);
 </script>
 </body>
 </html>
