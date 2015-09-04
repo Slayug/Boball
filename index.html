@@ -351,12 +351,13 @@ levels.push(new Level('Try 3 red bowls !',
 }));
 var a = -1;
 var b;
+var xColl;
 levels.push(new Level('You have a new spell, place two bowls to try. After that capture 5 bowls with those arcs.',
 			function(){
 		var rdmDx = parseInt(Math.random()*10)/10;
 		var rdmDy = parseInt(Math.random()*10)/10;
 		for(var p = 0; p < 1; p++){
-			points.push(new Point(WIDTH/2 + p,HEIGHT/2, randomColor()));
+			points.push(new Point(WIDTH/2 + p,HEIGHT/2, randomColor(), 1, 0));
 		}
 		this.bowlsPlaced = 0;
 		this.firstClick = false;
@@ -386,26 +387,39 @@ levels.push(new Level('You have a new spell, place two bowls to try. After that 
 					//console.log(mousePoints[m-1].x+' _ '+mousePoints[m-1].y+' -- '+mousePoints[m].x+' . '+mousePoints[m].y);
 					//console.log(a+' '+b);
 					for(var p = 0; p < points.length; p++){
-						if(points[p].x >
+						/*if(points[p].x >
 							((mousePoints[m].x < mousePoints[m-1].x) ?
 							mousePoints[m].x : mousePoints[m-1].x) &&
 							points[p].x <
 							((mousePoints[m].x > mousePoints[m-1].x) ?
-							mousePoints[m].x : mousePoints[m-1].x)){
+							mousePoints[m].x : mousePoints[m-1].x)){*/
 							var y = a * points[p].x + b;
 							//console.log('xxIN');
-							//console.log(parseInt(y)+' '+parseInt(points[p].y));
-							if(y == points[p].y){
-								console.log('coll');
-								if(points[p].color == 'white'){
+						//	console.log((y)+' '+(points[p].y));
+							var a1 = points[p].dy / points[p].x;
+							var b1 = -(a1 * points[p].x - points[p].y);
+							xColl = (b1 - b) / (a - a1);
+							var distance = Math.sqrt((points[p].x - xColl) *
+									(points[p].x - xColl) +
+									(points[p].y - (a*xColl+b)) *
+									(points[p].y - (a*xColl+b)));
+									if(distance < 20)
+										console.log(distance);
+							if(distance < 2){
+								if(points[p].color == 'white' && !points[p].touched){
 									points[p].color = points[p].lastColor;
-								}else{
+									console.log('reset');
+								}else if(!points[p].touched && points[p].color != 'white'){
 									points[p].lastColor = points[p].color;
 									points[p].color = 'white';
+									points[p].touched = true;
 									pointsTouched.push(points[p]);
+									console.log('set');
 								}
+							}else{
+								points[p].touched = false;
 							}
-						}
+					//	}
 					}
 				}
 			}
@@ -472,7 +486,6 @@ function nextLevel(){
 	}
 	levels[++currentLevel].generation();
 }
-
 function reset(){
 	points = [];
 	pointsTouched = [];
@@ -625,20 +638,16 @@ function draw(){
 	}
 	ctx.fill();
 
-
+ctx.beginPath();
+ctx.strokeStyle=points[0].color;
+if(a != -1){
+	for(var p = 0; p < points.length; p++){
+		ctx.moveTo(xColl, a*xColl+b);
+		ctx.lineTo(points[p].x, points[p].y);
+}}
+ctx.stroke();
 	for(var m = 0; m < messages.length; m++){
 		messages[m].draw();
-	}
-	if(a!=-1){
-
-		ctx.beginPath()
-		ctx.fillStyle='red';
-		for(var x = 0; x < WIDTH/2; x+=5){
-			ctx.moveTo(x,a*x+b);
-			ctx.arc(x,a*x+b,
-					2, 0, 2 * Math.PI, false);
-		}
-ctx.fill();
 	}
 
 		//draw mouse
