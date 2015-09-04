@@ -78,16 +78,24 @@ var alpha = 0;
 var Point = function(x, y, color, dx, dy, speedX, speedY){
 	this.x = x;
 	this.y = y;
-	if(dx == undefined)
+	if(dx == undefined){
 		this.dx = parseInt(Math.random()*100)/100;
-	else
+		var inv = random(1, 2);
+		if(inv == 1){
+			this.dx *= -1;
+		}
+	}else{
 		this.dx = dx;
-	if(dy == undefined)
+	}
+	if(dy == undefined){
 		this.dy = parseInt(Math.random()*100)/100;
-	else
+		var inv = random(1, 2);
+		if(inv == 1){
+			this.dy *= -1;
+		}
+	}else{
 		this.dy = dy;
-	console.log(this.dx);
-	console.log(this.dy);
+	}
 	if(color == undefined){
 		this.color = randomColor();
 	}else{
@@ -97,14 +105,6 @@ var Point = function(x, y, color, dx, dy, speedX, speedY){
 		this.speedX = random(2, 7);
 	}else{
 		this.speedX = speedX;
-	}
-	var inv = random(1, 2);
-	if(inv == 1){
-		this.dx *= -1;
-	}
-	inv = random(1, 2);
-	if(inv == 1){
-		this.dy *= -1;
 	}
 	if(speedY == undefined){
 		this.speedY = random(2, 7);
@@ -349,20 +349,25 @@ levels.push(new Level('Try 3 red bowls !',
 				}
 			}
 }));
-levels.push(new Level('You have a new power, place two bowls to try. After that capture 5 bowls with those arcs.',
+var a = -1;
+var b;
+levels.push(new Level('You have a new spell, place two bowls to try. After that capture 5 bowls with those arcs.',
 			function(){
 		var rdmDx = parseInt(Math.random()*10)/10;
 		var rdmDy = parseInt(Math.random()*10)/10;
-		for(var p = 0; p < 4; p++){
-			points.push(new Point(WIDTH/2,HEIGHT/2, randomColor(), rdmDx, rdmDy));
+		for(var p = 0; p < 1; p++){
+			points.push(new Point(WIDTH/2 + p,HEIGHT/2, randomColor()));
 		}
 		this.bowlsPlaced = 0;
 		this.firstClick = false;
 	    },
 		function(){ //LOGIC
 			if(alpha < 2*Math.PI){
-				alpha += 0.02;
+				alpha += 0.2;
 				animations['win'].logic();
+				if(parseFloat(alpha) > 6.1){
+					alpha = 2*Math.PI;
+					}
 				return;
 			}
 
@@ -375,13 +380,31 @@ levels.push(new Level('You have a new power, place two bowls to try. After that 
 
 			for(var m = 0; m < mousePoints.length; m++){
 				if(m % 2 != 0){
-					var a = (mousePoints[m-1].y - mousePoints[m].y) /
+					a = (mousePoints[m-1].y - mousePoints[m].y) /
 						(mousePoints[m-1].x - mousePoints[m].x);
-					var b = a * mousePoints[m].x - mousePoints[m].y;
-
+					b = -(a * mousePoints[m].x - mousePoints[m].y);
+					//console.log(mousePoints[m-1].x+' _ '+mousePoints[m-1].y+' -- '+mousePoints[m].x+' . '+mousePoints[m].y);
+					//console.log(a+' '+b);
 					for(var p = 0; p < points.length; p++){
-						if(a * points[p].x + b == points[p].y){
-							console.log('coll');
+						if(points[p].x >
+							((mousePoints[m].x < mousePoints[m-1].x) ?
+							mousePoints[m].x : mousePoints[m-1].x) &&
+							points[p].x <
+							((mousePoints[m].x > mousePoints[m-1].x) ?
+							mousePoints[m].x : mousePoints[m-1].x)){
+							var y = a * points[p].x + b;
+							//console.log('xxIN');
+							//console.log(parseInt(y)+' '+parseInt(points[p].y));
+							if(y == points[p].y){
+								console.log('coll');
+								if(points[p].color == 'white'){
+									points[p].color = points[p].lastColor;
+								}else{
+									points[p].lastColor = points[p].color;
+									points[p].color = 'white';
+									pointsTouched.push(points[p]);
+								}
+							}
 						}
 					}
 				}
@@ -416,19 +439,20 @@ levels.push(new Level('You have a new power, place two bowls to try. After that 
 		function(e){ //MOUSECLIKED
 			if(alpha < 2*Math.PI)
 				return;
-			if(!this.firstClick){
-				new Message('Oups, sorry i have one bug with this click..',
-							100, 100, 7000, null);
-				new Message('Deal with it !',
-							100, 140, 7000, null);
-				this.firstClick = true;
-			}
+
 			for(var p = 0; p < points.length; p++){
 				points[p].speedX *= -1;
 				points[p].speedY *= -1;
 			}
 			if(e.button == 0){
-				if(this.bowlsPlaced < 4){
+				if(!this.firstClick){
+					new Message('Oups, sorry i have one bug with this click..',
+								100, 100, 7000, null);
+					new Message('Deal with it !',
+								100, 140, 7000, null);
+					this.firstClick = true;
+				}
+				if(this.bowlsPlaced < 6){
 		    		mousePoints.push(new Point(e.clientX, e.clientY));
 		    		this.bowlsPlaced++;
 				}else{
@@ -551,6 +575,7 @@ function draw(){
 	    ctx.shadowBlur = 0;
 		ctx.font = '24px serif';
 		ctx.fillText(levels[currentLevel].goal, 22, 30);
+		ctx.fillText('Bowls captured: '+pointsTouched.length, 22, 60);
 	    if(lostLevel){
 	        ctx.fillStyle = 'white';
 	        ctx.shadowOffsetX = 0;
@@ -604,6 +629,17 @@ function draw(){
 	for(var m = 0; m < messages.length; m++){
 		messages[m].draw();
 	}
+	if(a!=-1){
+
+		ctx.beginPath()
+		ctx.fillStyle='red';
+		for(var x = 0; x < WIDTH/2; x+=5){
+			ctx.moveTo(x,a*x+b);
+			ctx.arc(x,a*x+b,
+					2, 0, 2 * Math.PI, false);
+		}
+ctx.fill();
+	}
 
 		//draw mouse
 		ctx.beginPath();
@@ -638,6 +674,8 @@ function update(){
 		}
 		points[p].x += points[p].speedX * points[p].dx;
 		points[p].y += points[p].speedY * points[p].dy;
+		points[p].x = parseInt(points[p].x*100)/100;
+		points[p].y = parseInt(points[p].y*100)/100;
 	}
 
     if(lostLevel){
