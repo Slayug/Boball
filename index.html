@@ -354,10 +354,8 @@ var b;
 var xColl;
 levels.push(new Level('You have a new spell, place two bowls to try. After that capture 5 bowls with those arcs.',
 			function(){
-		var rdmDx = parseInt(Math.random()*10)/10;
-		var rdmDy = parseInt(Math.random()*10)/10;
-		for(var p = 0; p < 1; p++){
-			points.push(new Point(WIDTH/2 + p,HEIGHT/2, randomColor(), 1, 0));
+		for(var p = 0; p < 11; p++){
+			points.push(new Point(WIDTH/2 + p,HEIGHT/2, randomColor(), 1));
 		}
 		this.bowlsPlaced = 0;
 		this.firstClick = false;
@@ -387,12 +385,12 @@ levels.push(new Level('You have a new spell, place two bowls to try. After that 
 					//console.log(mousePoints[m-1].x+' _ '+mousePoints[m-1].y+' -- '+mousePoints[m].x+' . '+mousePoints[m].y);
 					//console.log(a+' '+b);
 					for(var p = 0; p < points.length; p++){
-						/*if(points[p].x >
+						if(points[p].x >
 							((mousePoints[m].x < mousePoints[m-1].x) ?
 							mousePoints[m].x : mousePoints[m-1].x) &&
 							points[p].x <
 							((mousePoints[m].x > mousePoints[m-1].x) ?
-							mousePoints[m].x : mousePoints[m-1].x)){*/
+							mousePoints[m].x : mousePoints[m-1].x)){
 							var y = a * points[p].x + b;
 							//console.log('xxIN');
 						//	console.log((y)+' '+(points[p].y));
@@ -403,23 +401,24 @@ levels.push(new Level('You have a new spell, place two bowls to try. After that 
 									(points[p].x - xColl) +
 									(points[p].y - (a*xColl+b)) *
 									(points[p].y - (a*xColl+b)));
-									if(distance < 20)
-										console.log(distance);
-							if(distance < 2){
+									//	console.log(distance);
+							if(distance < 10){
 								if(points[p].color == 'white' && !points[p].touched){
 									points[p].color = points[p].lastColor;
-									console.log('reset');
+									points[p].touched = true;
+								//	console.log('reset');
 								}else if(!points[p].touched && points[p].color != 'white'){
 									points[p].lastColor = points[p].color;
 									points[p].color = 'white';
 									points[p].touched = true;
 									pointsTouched.push(points[p]);
-									console.log('set');
+									//console.log('set');
 								}
 							}else{
+								//	console.log(lastDistance);
 								points[p].touched = false;
 							}
-					//	}
+						}
 					}
 				}
 			}
@@ -427,8 +426,8 @@ levels.push(new Level('You have a new spell, place two bowls to try. After that 
 	            lost();
 	            return;
 	        }
-			if(pointsTouched.length >= 3){
-				//nextLevel();
+			if(pointsTouched.length >= 5){
+				nextLevel();
 			}
 		},
 		function(){ //DRAW
@@ -461,9 +460,9 @@ levels.push(new Level('You have a new spell, place two bowls to try. After that 
 			if(e.button == 0){
 				if(!this.firstClick){
 					new Message('Oups, sorry i have one bug with this click..',
-								100, 100, 7000, null);
+								100, 100, 4000, null);
 					new Message('Deal with it !',
-								100, 140, 7000, null);
+								100, 140, 4000, null);
 					this.firstClick = true;
 				}
 				if(this.bowlsPlaced < 6){
@@ -637,7 +636,7 @@ function draw(){
 
 	}
 	ctx.fill();
-
+/**
 ctx.beginPath();
 ctx.strokeStyle=points[0].color;
 if(a != -1){
@@ -645,7 +644,7 @@ if(a != -1){
 		ctx.moveTo(xColl, a*xColl+b);
 		ctx.lineTo(points[p].x, points[p].y);
 }}
-ctx.stroke();
+ctx.stroke();**/
 	for(var m = 0; m < messages.length; m++){
 		messages[m].draw();
 	}
