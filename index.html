@@ -152,7 +152,7 @@ function Level(goal, fctGeneration, logic, draw, fctMouseClicked){
 	this.draw = draw;
 	this.eventMouseClicked = fctMouseClicked;
 }
-levels.push(new Level('Place one ball and capture an other with the first !',
+levels.push(new Level('Place one ball and capture an other one with the first !',
 	function(){
 		for(var p = 0; p < 72; p++){
 			points.push(new Point(WIDTH/2,HEIGHT/2));
