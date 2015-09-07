@@ -19,8 +19,6 @@ cursor:url("mouse.png"), default;
 <canvas onmousemove="mouseMove(event)" onmouseup="mouseClicked(event)" id="canvasGame">
 </canvas>
 
-<script src="http://code.jquery.com/jquery-1.10.1.min.js"></script>
-
 <script type="text/javascript">
 var lastFrameTimeMs = 0;
 var maxFPS = 120;
@@ -75,6 +73,17 @@ var WIDTH = widthW;
 var HEIGHT = heightW - 4;
 var hasClicked = false;
 var alpha = 0;
+var audioHit = [];
+audioHit.push(new Audio('select.wav'));
+audioHit.push(new Audio('hit.wav'));
+audioHit.push(new Audio('hitSine.wav'));
+var currentHit = 0;
+function nextHitSong(){
+	if(currentHit + 1 == audioHit.length){
+		currentHit = -1;
+	}
+	audioHit[++currentHit].play();
+}
 var Point = function(x, y, color, dx, dy, speedX, speedY){
 	this.x = x;
 	this.y = y;
@@ -152,7 +161,7 @@ function Level(goal, fctGeneration, logic, draw, fctMouseClicked){
 	this.draw = draw;
 	this.eventMouseClicked = fctMouseClicked;
 }
-levels.push(new Level('Place one ball and capture an other one with the first !',
+levels.push(new Level('Place one ball and capture 10 other with the first !',
 	function(){
 		for(var p = 0; p < 72; p++){
 			points.push(new Point(WIDTH/2,HEIGHT/2));
@@ -171,16 +180,17 @@ levels.push(new Level('Place one ball and capture an other one with the first !'
 		for(var p = 0; p < points.length; p++){
 			for(var m = 0; m < mousePoints.length; m++){
 				if(points[p].inCollision(mousePoints[m]) &&
-						pointsTouched.indexOf(mousePoints[m]) == -1){
+						pointsTouched.indexOf(points[p]) == -1){
 					points[p].color = 'white';
 					pointsTouched.push(points[p]);
 					var fb = new Point(points[p].x, points[p].y);
 					fb.color='white';
 					flashBall.push(fb);
+					nextHitSong();
 				}
 			}
 		}
-		if(pointsTouched.length >= 1){
+		if(pointsTouched.length >= 10){
 			nextLevel();
 		}
 	},
@@ -231,6 +241,7 @@ levels.push(new Level('3 balls this time !',
 						pointsTouched.indexOf(points[p]) == -1){
 					points[p].color = 'white';
 					pointsTouched.push(points[p]);
+					nextHitSong();
 					var fb = new Point(points[p].x, points[p].y);
 					fb.color='white';
 					flashBall.push(fb);
@@ -286,6 +297,8 @@ levels.push(new Level('Try 3 red balls !',
 							&& points[p].color == '#FF4B47'){
 						points[p].color = 'white';
 						pointsTouched.push(points[p]);
+						pointsTouched.push(points[p]);
+						nextHitSong();
 						var fb = new Point(points[p].x, points[p].y);
 						fb.color='red';
 						flashBall.push(fb);
@@ -378,6 +391,7 @@ levels.push(new Level('You have a new spell, place two balls to try. After that 
 									points[p].lastColor = points[p].color;
 									points[p].color = 'white';
 									points[p].touched = true;
+									nextHitSong();
 									var fb = new Point(xColl, a*xColl+b);
 									fb.color='white';
 									flashBall.push(fb);
