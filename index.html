@@ -74,9 +74,9 @@ var HEIGHT = heightW - 4;
 var hasClicked = false;
 var alpha = 0;
 var audioHit = [];
-audioHit.push(new Audio('select.wav'));
-audioHit.push(new Audio('hit.wav'));
-audioHit.push(new Audio('hitSine.wav'));
+audioHit.push(new Audio('sound/select.wav'));
+audioHit.push(new Audio('sound/hit.wav'));
+audioHit.push(new Audio('sound/hitSine.wav'));
 var currentHit = 0;
 function nextHitSong(){
 	if(currentHit + 1 == audioHit.length){
