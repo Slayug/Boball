@@ -405,7 +405,7 @@ levels.push(new Level('Try 3 green balls !',
 					points[p].speedY *= -1;
 				}
 			}else{
-				if(this.ballsPlaced < 5){
+				if(levels[currentLevel-1].ballsPlaced < 3){
 		    		mousePoints.push(new Point(e.clientX, e.clientY));
 		    		levels[currentLevel-1].ballsPlaced++;
 				}
@@ -450,28 +450,17 @@ levels.push(new Level('You have a new spell, place two balls to try. After that 
 							((mousePoints[m].x > mousePoints[m-1].x) ?
 							mousePoints[m].x : mousePoints[m-1].x)){
 							var y = a * points[p].x + b;
-							var a1 = points[p].dy / points[p].x;
+							var a1 = points[p].dy / points[p].dx;
 							var b1 = -(a1 * points[p].x - points[p].y);
 							var xColl = (b1 - b) / (a - a1);
-							var distance = 10;
-
-							var touched = true;
-							for(var x = points[p].x - points[p].dx*points[p].speedX;
-															x =< points[p].x; x+=points[p].dx){
-											distance = Math.sqrt((x - xColl) *
-											(x - xColl) +
-											(a1*x+b1 - (a*xColl+b)) *
-											(a1*x+b1 - (a*xColl+b)));
-											if(distance < 10){
-												break;
-											}
-							}
-
+							var distance = Math.sqrt((points[p].x - xColl) *
+									(points[p].x - xColl) +
+									(points[p].y - (a*xColl+b)) *
+									(points[p].y - (a*xColl+b)));
 							if(distance < 10){
 								if(points[p].color == 'white' && !points[p].touched){
 									points[p].color = points[p].lastColor;
 									points[p].touched = true;
-								//	console.log('reset');
 								}else if(!points[p].touched && points[p].color != 'white'){
 									points[p].lastColor = points[p].color;
 									points[p].color = 'white';
@@ -483,8 +472,6 @@ levels.push(new Level('You have a new spell, place two balls to try. After that 
 									pointsTouched.push(points[p]);
 								}
 							}else{
-								//	console.log(lastDistance);
-
 								points[p].touched = false;
 							}
 						}
