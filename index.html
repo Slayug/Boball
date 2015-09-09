@@ -8,9 +8,8 @@
 <style>
 body {
 	margin:0px;
-padding:0px;
-cursor:url("mouse.png"), default;
-
+	padding:0px;
+	cursor: none;
 }
 </style>
 
@@ -461,7 +460,6 @@ levels.push(new Level('You have a new spell, place two balls to try. After that 
 							points[p].x <
 							((mousePoints[m].x > mousePoints[m-1].x) ?
 							mousePoints[m].x : mousePoints[m-1].x)){
-							var y = a * points[p].x + b;
 							var a1 = points[p].dy / points[p].dx;
 							var b1 = -(a1 * points[p].x - points[p].y);
 							var xColl = (b1 - b) / (a - a1);
@@ -787,12 +785,11 @@ function draw(){
 		//draw mouse
 		ctx.beginPath();
 		ctx.fillStyle = 'white';
-		ctx.shadowBlur = 0;
+		ctx.shadowBlur = 1;
+		ctx.lineWidth = 2;
 		ctx.arc(xMouse, yMouse, 11, 0, 2 * Math.PI, false);
 		ctx.fill();
 		ctx.beginPath();
-		ctx.fillStyle = randomColor();
-		ctx.lineWidth=2;
 		ctx.arc(xMouse, yMouse, 8, 0, 2 * Math.PI, false);
 		ctx.stroke();
 
