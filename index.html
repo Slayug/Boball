@@ -152,7 +152,6 @@ var mousePoints = [];
 var currentLevel = -1;
 var levels = [];
 var flashBall = [];
-
 function Level(goal, fctGeneration, logic, draw, fctMouseClicked){
 	this.goal = goal;
 	this.ballsPlaced = 0;
@@ -168,14 +167,23 @@ levels.push(new Level('Place one ball and capture 10 other with the first !',
 			points.push(new Point(WIDTH/2,HEIGHT/2));
 		}
 		this.ready = false;
+		this.step = 0;
+		this.next = false;
 	},
 	function(){ //LOGIC
 		if(!this.ready){
 			if(hasClicked){
 				this.ready = true;
+				this.next = false;
 			}else{
 				return;
 			}
+		}else{
+			if(this.next){
+			if(this.step < 3){
+				this.ready = false;
+				this.step++;
+			}}
 		}
 
 		for(var p = 0; p < points.length; p++){
@@ -188,6 +196,9 @@ levels.push(new Level('Place one ball and capture 10 other with the first !',
 					fb.color='white';
 					flashBall.push(fb);
 					nextHitSong();
+					if(this.step == 1 && this.ready){
+						this.next = true;
+					}
 				}
 			}
 		}
@@ -197,24 +208,37 @@ levels.push(new Level('Place one ball and capture 10 other with the first !',
 	},
 	function(){ //DRAW
 		if(!this.ready){
+			if(this.step == 0){
+				ctx.strokeStyle = "white";
+				ctx.lineWidth="10";
+				ctx.moveTo(200, 55);
+				ctx.lineTo(200, HEIGHT * 0.42);
+				ctx.moveTo(202, 55);
+				ctx.lineTo(150, 100);
+				ctx.moveTo(198, 55);
+				ctx.lineTo(250, 100);
+				ctx.stroke();
+				ctx.fillText('LEVEL INSTRUCTION', 100, HEIGHT * 0.42 + 25);
 
-			ctx.strokeStyle="white";
-			ctx.lineWidth="10";
-			ctx.moveTo(200, 55);
-			ctx.lineTo(200, HEIGHT * 0.42);
-			ctx.moveTo(202, 55);
-			ctx.lineTo(150, 100);
-			ctx.moveTo(198, 55);
-			ctx.lineTo(250, 100);
-			ctx.stroke();
-			ctx.fillText('LEVEL INSTRUCTION', 100, HEIGHT * 0.42 + 25);
-
-			ctx.shadowColor = randomColor();
-			ctx.shadowBlur="50";
-			ctx.font = '42px serif';
-			ctx.fillText('Mouse Left: Put one ball', WIDTH/2 - 160, HEIGHT/2 - 20);
-			ctx.fillText('Mouse Right: Reverse the balls', WIDTH/2 - 185, HEIGHT/2 + 22);
-			ctx.fillText('Click to start.', WIDTH/2 - 50, HEIGHT/2 + 62);
+				ctx.shadowColor = randomColor();
+				ctx.shadowBlur="50";
+				ctx.font = '42px serif';
+				ctx.fillText('Mouse Left: Put one ball', WIDTH/2 - 160, HEIGHT/2 - 20);
+				ctx.fillText('Mouse Right: Reverse the balls', WIDTH/2 - 185, HEIGHT/2 + 22);
+				ctx.fillText('Click to start.', WIDTH/2 - 50, HEIGHT/2 + 62);
+			}else if(this.step == 1){
+				mousePoints[0].radius = 20;
+				ctx.shadowColor = randomColor();
+				ctx.shadowBlur="50";
+				ctx.font = '42px serif';
+				ctx.fillText('This ball should be collided with one other,', WIDTH/2 - 160, HEIGHT/2 - 20);
+			}else if(this.step == 2){
+				ctx.shadowColor = randomColor();
+				ctx.shadowBlur="50";
+				ctx.font = '42px serif';
+				ctx.fillText('You see, one other ball was collided with the first', WIDTH/2 - 160, HEIGHT/2 - 20);
+				ctx.fillText('Continue to do that, to capture 10 balls !', WIDTH/2 - 160, HEIGHT/2 + 20);
+			}
 		}
 	},
 	function(e){ //MOUSECLIKED
@@ -227,6 +251,11 @@ levels.push(new Level('Place one ball and capture 10 other with the first !',
 			}
 		}else{
 			mousePoints.push(new Point(e.clientX, e.clientY));
+			if(this.ready){
+				if(this.step == 0){
+					this.next = true;
+				}
+			}
 		}
 	}));
 levels.push(new Level('3 balls this time !',
@@ -424,10 +453,20 @@ levels.push(new Level('You have a new spell, place two balls to try. After that 
 							var a1 = points[p].dy / points[p].x;
 							var b1 = -(a1 * points[p].x - points[p].y);
 							var xColl = (b1 - b) / (a - a1);
-							var distance = Math.sqrt((points[p].x - xColl) *
-									(points[p].x - xColl) +
-									(points[p].y - (a*xColl+b)) *
-									(points[p].y - (a*xColl+b)));
+							var distance = 10;
+
+							var touched = true;
+							for(var x = points[p].x - points[p].dx*points[p].speedX;
+															x =< points[p].x; x+=points[p].dx){
+											distance = Math.sqrt((x - xColl) *
+											(x - xColl) +
+											(a1*x+b1 - (a*xColl+b)) *
+											(a1*x+b1 - (a*xColl+b)));
+											if(distance < 10){
+												break;
+											}
+							}
+
 							if(distance < 10){
 								if(points[p].color == 'white' && !points[p].touched){
 									points[p].color = points[p].lastColor;
@@ -445,6 +484,7 @@ levels.push(new Level('You have a new spell, place two balls to try. After that 
 								}
 							}else{
 								//	console.log(lastDistance);
+
 								points[p].touched = false;
 							}
 						}
@@ -502,7 +542,7 @@ levels.push(new Level('Ok you have understand, now get 7 balls.',
 		for(var p = 0; p < 2; p++){
 			points.push(new Point(WIDTH/2 + p,HEIGHT/2, randomColor()));
 		}
-		this.ballsPlaced = 0;
+		levels[currentLevel-1].ballsPlaced = 0;
 		levels[currentLevel-1].ballsGoal = 7;
 		levels[currentLevel-1].pointsMouseToLose = 2;
 	    },
@@ -667,9 +707,9 @@ function draw(){
 	        ctx.shadowOffsetY = 0;
 	        ctx.shadowColor = 'white';
 	        ctx.shadowBlur = animations['lost'].step;
-			ctx.font = '30px serif';
-			ctx.fillText('CLICK TO', WIDTH/2 - 42, HEIGHT/2-30);
-			ctx.font = '42px serif';
+					ctx.font = '30px serif';
+					ctx.fillText('CLICK TO', WIDTH/2 - 42, HEIGHT/2-30);
+					ctx.font = '42px serif';
 	        ctx.fillText('RETRY', WIDTH/2 - 42, HEIGHT/2);
 	    }else if(win){
 					ctx.fillStyle = 'white';
@@ -723,20 +763,21 @@ function draw(){
 		ctx.arc(points[p].x, points[p].y, points[p].radius, 0, 2 * Math.PI, false);
 		ctx.fill();
 	}
-	ctx.beginPath();
-	ctx.fillStyle = 'white';
-	ctx.shadowOffsetX = 0;
-	ctx.shadowOffsetY = 0;
-	ctx.shadowBlur = 20;
-	ctx.shadowColor = 'white';
-	for(var p = 0; p < mousePoints.length; p++){
-		ctx.moveTo(mousePoints[p].x, mousePoints[p].y);
-		ctx.arc(mousePoints[p].x, mousePoints[p].y,
-				mousePoints[p].radius, 0, 2 * Math.PI, false);
+
+		ctx.beginPath();
+		ctx.fillStyle = 'white';
+		ctx.shadowOffsetX = 0;
+		ctx.shadowOffsetY = 0;
+		ctx.shadowBlur = 20;
+		ctx.shadowColor = 'white';
+		for(var p = 0; p < mousePoints.length; p++){
+			ctx.moveTo(mousePoints[p].x, mousePoints[p].y);
+			ctx.arc(mousePoints[p].x, mousePoints[p].y,
+					mousePoints[p].radius, 0, 2 * Math.PI, false);
 
 
-	}
-	ctx.fill();
+		}
+		ctx.fill();
 	for(var m = 0; m < messages.length; m++){
 		messages[m].draw();
 	}
@@ -765,8 +806,7 @@ function update(){
 	}
 	for(var f = 0; f < flashBall.length; f++){
 		flashBall[f].radius += 0.8;
-		if(flashBall[f].radius > 60 &&
-			flashBall[f].radius > 60){
+		if(flashBall[f].radius > 70){
 			flashBall.splice(f, 1);
 			f--;
 		}
@@ -808,7 +848,6 @@ function update(){
 		scale += 0.005;
 		animations['win'].logic();
 		if(scale >= 1){
-			console.log('set');
 			levels[++currentLevel].generation();
 			nextLevelState = false;
 			scale = 1;
