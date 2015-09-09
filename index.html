@@ -27,7 +27,6 @@ var timestep = 1000 / 120;
 var fps = 120;
 var framesThisSecond = 0;
 var lastFpsUpdate = 0;
-var scale = 1;
 /**
  * requestAnimationFrame
  */
@@ -54,7 +53,7 @@ function random(min, max){
 }
 function mouseClicked(e){
     hasClicked = true;
-	if(!lostLevel && !win)
+	if(!lostLevel && !win && !nextLevelState)
 		levels[currentLevel].eventMouseClicked(e);
 }
 var xMouse = 0;
@@ -209,6 +208,9 @@ levels.push(new Level('Place one ball and capture 10 other with the first !',
 	function(){ //DRAW
 		if(!this.ready){
 			if(this.step == 0){
+
+				ctx.font = '23px serif';
+				ctx.fillStyle = 'white';
 				ctx.strokeStyle = "white";
 				ctx.lineWidth="10";
 				ctx.moveTo(200, 55);
@@ -220,24 +222,29 @@ levels.push(new Level('Place one ball and capture 10 other with the first !',
 				ctx.stroke();
 				ctx.fillText('LEVEL INSTRUCTION', 100, HEIGHT * 0.42 + 25);
 
+				ctx.font = '42px serif';
 				ctx.shadowColor = randomColor();
 				ctx.shadowBlur="50";
-				ctx.font = '42px serif';
 				ctx.fillText('Mouse Left: Put one ball', WIDTH/2 - 160, HEIGHT/2 - 20);
 				ctx.fillText('Mouse Right: Reverse the balls', WIDTH/2 - 185, HEIGHT/2 + 22);
 				ctx.fillText('Click to start.', WIDTH/2 - 50, HEIGHT/2 + 62);
 			}else if(this.step == 1){
 				mousePoints[0].radius = 20;
+
+				ctx.fillStyle = 'white';
 				ctx.shadowColor = randomColor();
 				ctx.shadowBlur="50";
 				ctx.font = '42px serif';
-				ctx.fillText('This ball should be collided with one other,', WIDTH/2 - 160, HEIGHT/2 - 20);
+				var y =  HEIGHT/2 + (HEIGHT/2 - mousePoints[0].y);
+				ctx.fillText('This ball should be collided with one other..',  WIDTH/2 - 200, y);
 			}else if(this.step == 2){
 				ctx.shadowColor = randomColor();
 				ctx.shadowBlur="50";
 				ctx.font = '42px serif';
-				ctx.fillText('You see, one other ball was collided with the first', WIDTH/2 - 160, HEIGHT/2 - 20);
-				ctx.fillText('Continue to do that, to capture 10 balls !', WIDTH/2 - 160, HEIGHT/2 + 20);
+
+				ctx.fillStyle = 'white';
+				ctx.fillText('You see, one other ball was collided with the first',  WIDTH/2 - 200, HEIGHT/2);
+				ctx.fillText('Continue to do that, to capture 10 balls !', WIDTH/2 - 200, HEIGHT/2 + 40);
 			}
 		}
 	},
@@ -315,13 +322,16 @@ levels.push(new Level('Try 3 red balls !',
 		}
 		this.ballsPlaced = 0;
 		this.ballsGoal = 3;
-		this.pointsMouseToLose = 4;
+		this.pointsMouseToLose = 3;
 		this.colorGoal = '#FF4B47';
 	    },
 		function(){ //LOGIC
-			if(alpha <= Math.PI){
+			if(alpha < Math.PI){
 				alpha += 0.02;
 				animations['win'].logic();
+				if(alpha + 0.5 >= Math.PI){
+					alpha = Math.PI;
+				}
 				return;
 			}
 			for(var p = 0; p < points.length; p++){
@@ -347,15 +357,16 @@ levels.push(new Level('Try 3 red balls !',
 			}
 		},
 		function(){ //DRAW
-			if(alpha <= Math.PI){
+			if(alpha < Math.PI){
+				ctx.fillStyle = 'white';
 				ctx.shadowColor = 'white';
-		        ctx.shadowBlur = animations['win'].step;
+		    ctx.shadowBlur = animations['win'].step;
 				ctx.font = '42px serif';
-		        ctx.fillText('LOADING', WIDTH/2 - 55, HEIGHT/2);
+		    ctx.fillText('LOADING', WIDTH/2 - 55, HEIGHT/2);
 			}
 		},
 		function(e){ //MOUSECLIKED
-			if(alpha <= Math.PI)
+			if(alpha < Math.PI)
 				return;
 			if(e.button > 0){
 				for(var p = 0; p < points.length; p++){
@@ -389,15 +400,16 @@ levels.push(new Level('Try 3 green balls !',
 			levels[currentLevel-1].logic();
 		},
 		function(){ //DRAW
-			if(alpha <= Math.PI){
+			if(alpha < Math.PI){
+				ctx.fillStyle = 'white';
 				ctx.shadowColor = 'white';
-		        ctx.shadowBlur = animations['win'].step;
+		    ctx.shadowBlur = animations['win'].step;
 				ctx.font = '42px serif';
-		        ctx.fillText('LOADING', WIDTH/2 - 55, HEIGHT/2);
+		    ctx.fillText('LOADING', WIDTH/2 - 55, HEIGHT/2);
 			}
 		},
 		function(e){ //MOUSECLIKED
-			if(alpha <= Math.PI)
+			if(alpha < Math.PI)
 				return;
 			if(e.button > 0){
 				for(var p = 0; p < points.length; p++){
@@ -488,10 +500,11 @@ levels.push(new Level('You have a new spell, place two balls to try. After that 
 		},
 		function(){ //DRAW
 			if(alpha < 2*Math.PI){
+				ctx.fillStyle = 'white';
 				ctx.shadowColor = 'white';
-		        ctx.shadowBlur = animations['win'].step;
+		    ctx.shadowBlur = animations['win'].step;
 				ctx.font = '42px serif';
-		        ctx.fillText('LOADING', WIDTH/2 - 55, HEIGHT/2);
+		    ctx.fillText('LOADING', WIDTH/2 - 55, HEIGHT/2);
 			}else{
 				ctx.beginPath();
 				ctx.lineWidth = 4;
@@ -538,10 +551,11 @@ levels.push(new Level('Ok you have understand, now get 7 balls.',
 		},
 		function(){ //DRAW
 			if(alpha < 2*Math.PI){
+				ctx.fillStyle = 'white';
 				ctx.shadowColor = 'white';
-		        ctx.shadowBlur = animations['win'].step;
+		    ctx.shadowBlur = animations['win'].step;
 				ctx.font = '42px serif';
-		        ctx.fillText('LOADING', WIDTH/2 - 55, HEIGHT/2);
+		    ctx.fillText('LOADING', WIDTH/2 - 55, HEIGHT/2);
 			}else{
 				ctx.beginPath();
 				ctx.lineWidth = 4;
@@ -587,7 +601,6 @@ function nextLevel(){
 	}
 	if(currentLevel > -1){
 		nextLevelState=true;
-		scale = 0.1;
 	}else{
 		levels[++currentLevel].generation();
 	}
@@ -644,7 +657,7 @@ function Animation(start, end, bearing){
     }
 }
 var animations = [];
-animations['lost'] = new Animation(0, 16, 0.4);
+animations['lost'] = new Animation(0, 16, 0.15);
 animations['win'] = animations['lost'];
 
 nextLevel();
@@ -681,10 +694,13 @@ function draw(){
 
 		ctx.fillStyle = 'black';
 		ctx.fillRect(0, 0, WIDTH, HEIGHT);
-		//ctx.clearRect(0, 0, WIDTH, HEIGHT);
+
+
+		ctx.save();
+		levels[currentLevel].draw();
 
 		ctx.fillStyle = 'white';
-	    ctx.shadowBlur = 0;
+	  ctx.shadowBlur = 0;
 		ctx.font = '24px serif';
 		ctx.fillText(levels[currentLevel].goal, 22, 30);
 		ctx.fillText('balls captured: '+pointsTouched.length, 22, 60);
@@ -708,30 +724,29 @@ function draw(){
 					ctx.font = '72px serif';
 	        ctx.fillText('Good Game !', WIDTH/2 - 200, HEIGHT/2);
 		}
-		ctx.save();
-		ctx.scale(scale, scale);
-		levels[currentLevel].draw();
-		ctx.translate(WIDTH/2,HEIGHT/2);
-		ctx.rotate(this.alpha);
-		ctx.translate(-WIDTH/2,-HEIGHT/2);
 
 		if(nextLevelState){
 				ctx.fillStyle = 'white';
-				ctx.font = '42px serif';
 				ctx.shadowOffsetX = 0;
 				ctx.shadowOffsetY = 0;
 				ctx.shadowColor = 'white';
-				ctx.shadowBlur = animations['win'].step;
-				ctx.font = '72px serif';
-				ctx.fillText('Next Level', WIDTH/2 - 200, HEIGHT/2);
-				ctx.restore();
+				ctx.shadowBlur = animations['lost'].step;
+				ctx.font = '30px serif';
+				ctx.fillText('CLICK TO', WIDTH/2 - 42, HEIGHT/2-30);
+				ctx.font = '42px serif';
+				ctx.fillText('NEXT LEVEL', WIDTH/2 - 92, HEIGHT/2);
 				return;
 		}
+
+
+		ctx.translate(WIDTH/2,HEIGHT/2);
+		ctx.rotate(alpha);
+		ctx.translate(-WIDTH/2,-HEIGHT/2);
 
 	ctx.beginPath();
 	if(flashBall.length > 0){
 		ctx.fillStyle = flashBall[0].color;
-		ctx.globalAlpha = 0.5;
+		ctx.globalAlpha = 0.4;
 		ctx.shadowBlur = 10;
 		ctx.shadowColor = flashBall[0].color;
 	}
@@ -803,7 +818,7 @@ function update(){
 	if(currentLevel < 4){
 		var mouseNeedDeleted = -1;
 		for(var p = 0; p < mousePoints.length; p++){
-			mousePoints[p].radius+=0.1;
+			mousePoints[p].radius += 0.1;
 			if(mousePoints[p].radius >= 28){
 				mouseNeedDeleted = p;
 			}
@@ -832,12 +847,10 @@ function update(){
 	}
 
 	if(nextLevelState){
-		scale += 0.005;
 		animations['win'].logic();
-		if(scale >= 1){
+		if(hasClicked){
 			levels[++currentLevel].generation();
 			nextLevelState = false;
-			scale = 1;
 		}
 		return;
 	}
