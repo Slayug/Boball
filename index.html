@@ -697,8 +697,8 @@ function draw(){
 				ctx.shadowBlur = animations['win'].step;
 				ctx.font = '72px serif';
 				ctx.fillText('Next Level', WIDTH/2 - 200, HEIGHT/2);
-
-			return;
+				ctx.restore();
+				return;
 		}
 
 	ctx.beginPath();
@@ -805,11 +805,13 @@ function update(){
 	}
 
 	if(nextLevelState){
-		scale += 0.02;
+		scale += 0.005;
 		animations['win'].logic();
-		if(scale == 1){
+		if(scale >= 1){
+			console.log('set');
 			levels[++currentLevel].generation();
 			nextLevelState = false;
+			scale = 1;
 		}
 		return;
 	}
